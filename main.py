@@ -34,12 +34,18 @@ logging.basicConfig(
 )
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await context.bot.send_message(chat_id=update.effective_chat.id, text="I'm a bot, please talk to me!")
+    botCommands = await context.bot.get_my_commands()
+    commands = ''
+    for botCommand in botCommands:
+        commands = commands + "/{} - {} \n".format(botCommand.command, botCommand.description)
+    startText="I'm a Ronnie test bot, use these commands to control me:\n{}".format(commands)
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=startText)
 
 async def tweet_media(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logging.info("{} - {}".format('tweet_photo', update.effective_chat.id))
     if not context.args:
         logging.error("{} - {} - {}".format('tweet_photo', update.effective_chat.id, "Url empty"))
+        await context.bot.send_message(chat_id=update.effective_chat.id, text="Url empty")
         return
     url = ' '.join(context.args)
     HEADERS = {'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8'}
@@ -61,6 +67,7 @@ async def ig_story(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logging.info("{} - {}".format('ig_story', update.effective_chat.id))
     if not context.args:
         logging.error("{} - {} - {}".format('ig_story', update.effective_chat.id, "Username empty"))
+        await context.bot.send_message(chat_id=update.effective_chat.id, text="Username empty")
         return
     username = ' '.join(context.args)
     profile = instaloader.Profile.from_username(L.context, username)
@@ -140,6 +147,7 @@ async def instagram(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logging.info("{} - {}".format('instagram', update.effective_chat.id))
     if not context.args:
         logging.error("{} - {} - {}".format('i', update.effective_chat.id, "Url empty"))
+        await context.bot.send_message(chat_id=update.effective_chat.id, text="Url empty")
         return
     url = ' '.join(context.args)
     array = url.split("/")
@@ -182,10 +190,27 @@ async def _ig_post_to_list(post: instaloader.Post):
             mediaList.append(InputMediaPhoto(media=post.url))
     return mediaList
 
+async def tk_video(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    logging.info("{} - {}".format('tk_video', update.effective_chat.id))
+    if not context.args:
+        logging.error("{} - {} - {}".format('tk_video', update.effective_chat.id, "Url empty"))
+        await context.bot.send_message(chat_id=update.effective_chat.id, text="Url empty")
+        return
+    url = ' '.join(context.args)
+    HEADERS = {'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8'}
+    lookupApi = "https://api.tikmate.app/api/lookup"
+    FormData = {'url': url}
+    data = parse.urlencode(FormData)
+    content = requests.post(url=lookupApi, headers=HEADERS, data=data).text
+    content = json.loads(content)
+    downloadUrl = "https://tikmate.app/download/" + content['token'] + "/" + content['id'] + ".mp4?hd=1"
+    await context.bot.send_video(chat_id=update.effective_chat.id, video=downloadUrl)
+
 if __name__ == '__main__':
     application = ApplicationBuilder().token(tg_token).build()
     
     start_handler = CommandHandler('start', start)
+    help_handler = CommandHandler('help', start)
     instagram_handler = CommandHandler('i', instagram)
     ig_story_handler = CommandHandler('s', ig_story)
     tweet_media_handler = CommandHandler('t', tweet_media)
@@ -195,12 +220,16 @@ if __name__ == '__main__':
 
     start_ig_post_polling_handler = CommandHandler('p', _ig_post_polling)
 
+    tk_video_handler = CommandHandler('tk', tk_video)
+
     application.add_handler(start_handler)
+    application.add_handler(help_handler)
     application.add_handler(instagram_handler)
     application.add_handler(tweet_media_handler)
     application.add_handler(ig_story_handler)
     application.add_handler(ig_story_with_keyboard_handler)
     application.add_handler(ig_story_callback_handler)
     application.add_handler(start_ig_post_polling_handler)
+    application.add_handler(tk_video_handler)
     
     application.run_polling()

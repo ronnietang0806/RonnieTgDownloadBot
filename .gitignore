@@ -1,0 +1,5 @@
+build/*
+telegram/*
+instaloader/*
+python_telegram_bot.egg-info/*
+*.egg

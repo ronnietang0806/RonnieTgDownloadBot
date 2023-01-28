@@ -15,7 +15,6 @@ config.read('config.ini')
 tg_token=config['TG']['token']
 ig_username=config['IG']['username']
 ig_password=config['IG']['password']
-schedule_timer=int(config['DEFAULT']['schedule_timer'])
 ###### Config ######
 
 ###### IG Username #####
